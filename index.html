@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HP-Tränaren</title>
+
+<!-- PWA / iOS -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0e0c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HP-Tränaren">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,800;1,9..144,400&family=Epilogue:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink: #0f0e0c;
+    --paper: #f5f0e8;
+    --paper2: #ede7d9;
+    --line: #d4ccc0;
+    --muted: #8c8278;
+    --gold: #c9963a;
+    --gold2: #e0aa4a;
+    --correct: #2a7a5a;
+    --radius: 20px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Epilogue', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex; flex-direction: column;
+    /* iOS safe areas */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Subtle grain */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  main {
+    position: relative; z-index: 1;
+    flex: 1;
+    max-width: 480px; width: 100%;
+    margin: 0 auto;
+    padding: 48px 24px 40px;
+    display: flex; flex-direction: column; gap: 36px;
+  }
+
+  /* ── HERO ── */
+  .hero { display: flex; flex-direction: column; gap: 10px; }
+  .hero-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--gold);
+  }
+  .hero-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(38px, 10vw, 56px);
+    font-weight: 800; letter-spacing: -2px; line-height: 0.95;
+    color: var(--paper);
+  }
+  .hero-title em { color: var(--gold); font-style: italic; font-weight: 400; }
+  .hero-sub { font-size: 14px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+  /* ── APP CARDS ── */
+  .apps { display: flex; flex-direction: column; gap: 12px; }
+  .apps-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .app-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    display: flex; align-items: center; gap: 18px;
+    text-decoration: none; color: inherit;
+    transition: all 0.2s cubic-bezier(.4,0,.2,1);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app-card:hover, .app-card:active {
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(255,255,255,0.2);
+    transform: translateY(-1px);
+  }
+
+  .app-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+    font-style: normal;
+  }
+  .icon-gold   { background: linear-gradient(135deg, #c9963a, #e0aa4a); }
+  .icon-blue   { background: linear-gradient(135deg, #2a5a8a, #3a7abf); }
+  .icon-green  { background: linear-gradient(135deg, #2a7a5a, #3aaa7a); }
+  .icon-purple { background: linear-gradient(135deg, #6a3a8a, #9a5abf); }
+
+  .app-info { flex: 1; min-width: 0; }
+  .app-name {
+    font-family: 'Fraunces', serif;
+    font-size: 18px; font-weight: 700; letter-spacing: -0.3px;
+    color: var(--paper); margin-bottom: 3px;
+  }
+  .app-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .app-badge {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--gold); background: rgba(201,150,58,0.15);
+    border: 1px solid rgba(201,150,58,0.3);
+    border-radius: 50px; padding: 3px 10px; white-space: nowrap;
+  }
+  .app-badge.new { color: var(--correct); background: rgba(42,122,90,0.15); border-color: rgba(42,122,90,0.3); }
+  .app-badge.soon { color: var(--muted); background: rgba(140,130,120,0.12); border-color: rgba(140,130,120,0.2); }
+
+  .app-arrow { color: rgba(255,255,255,0.25); font-size: 18px; margin-left: 4px; }
+
+  .app-card.disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+  /* ── INSTALL BANNER ── */
+  .install-banner {
+    background: rgba(201,150,58,0.1);
+    border: 1px solid rgba(201,150,58,0.25);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .install-banner.hidden { display: none; }
+  .install-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .install-text { flex: 1; }
+  .install-title { font-size: 14px; font-weight: 600; color: var(--gold); margin-bottom: 3px; }
+  .install-steps { font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .install-steps span { color: var(--paper); font-weight: 500; }
+  .install-close {
+    background: none; border: none; color: var(--muted);
+    font-size: 18px; cursor: pointer; padding: 0; line-height: 1;
+    flex-shrink: 0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative; z-index: 1;
+    padding: 0 24px 32px;
+    max-width: 480px; margin: 0 auto; width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-text { font-size: 11px; color: rgba(255,255,255,0.2); }
+  .pwa-status {
+    font-size: 11px; color: rgba(255,255,255,0.25);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .pwa-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--correct); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+  @media (max-width: 400px) {
+    main { padding: 36px 18px 32px; }
+    .hero-title { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-eyebrow">Högskoleprovet</div>
+    <h1 class="hero-title">HP-<em>Tränaren</em></h1>
+    <p class="hero-sub">Välj vilket delprov du vill öva på. AI genererar nya frågor i realtid.</p>
+  </div>
+
+  <!-- iOS install banner (shown only in Safari, not standalone) -->
+  <div class="install-banner" id="installBanner">
+    <span class="install-icon">📲</span>
+    <div class="install-text">
+      <div class="install-title">Installera som app på iPhone</div>
+      <div class="install-steps">
+        Tryck på <span>dela-knappen ↑</span> i Safari<br>
+        → Välj <span>"Lägg till på hemskärmen"</span><br>
+        → Klar! Fungerar som en vanlig app.
+      </div>
+    </div>
+    <button class="install-close" onclick="closeBanner()" aria-label="Stäng">×</button>
+  </div>
+
+  <!-- Apps -->
+  <div class="apps">
+    <div class="apps-label">Tillgängliga tränarear</div>
+
+    <!-- MEK -->
+    <a class="app-card" href="mek.html">
+      <div class="app-icon icon-gold">📝</div>
+      <div class="app-info">
+        <div class="app-name">MEK — Kontexttränaren</div>
+        <div class="app-desc">Välj rätt synonym baserat på sammanhang. AI genererar unika meningar.</div>
+      </div>
+      <span class="app-badge new">Klar</span>
+      <span class="app-arrow">›</span>
+    </a>
+
+    <!-- Flashcards -->
+    <a class="app-card" href="flashcards.html">
+      <div class="app-icon icon-blue">🃏</div>
+      <div class="app-info">
+        <div class="app-name">FlashFlow — Ordkort</div>
+        <div class="app-desc">Ladda din Anki-exportfil och träna ordkort med sparat felarkiv.</div>
+      </div>
+      <span class="app-badge new">Klar</span>
+      <span class="app-arrow">›</span>
+    </a>
+
+    <!-- LÄS -->
+    <div class="app-card disabled">
+      <div class="app-icon icon-green">📖</div>
+      <div class="app-info">
+        <div class="app-name">LÄS — Lästränaren</div>
+        <div class="app-desc">Läshastighet och förståelse under tidspress. HP-format.</div>
+      </div>
+      <span class="app-badge soon">Snart</span>
+    </div>
+
+    <!-- ELF -->
+    <div class="app-card disabled">
+      <div class="app-icon icon-purple">🔤</div>
+      <div class="app-info">
+        <div class="app-name">ELF — Engelsktränaren</div>
+        <div class="app-desc">Engelska fraser och meningsbyggnad i kontext.</div>
+      </div>
+      <span class="app-badge soon">Snart</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-text">HP-Tränaren · Offline-kompatibel</span>
+  <span class="pwa-status" id="pwaStatus">
+    <span class="pwa-dot"></span> Installerad
+  </span>
+</footer>
+
+<script>
+  /* ── Register Service Worker ── */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.warn('SW registration failed:', err));
+  }
+
+  /* ── iOS install banner logic ── */
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const bannerDismissed = localStorage.getItem('hp-banner-dismissed');
+  const banner = document.getElementById('installBanner');
+  const pwaStatus = document.getElementById('pwaStatus');
+
+  if (isStandalone) {
+    /* Running as installed PWA */
+    banner.classList.add('hidden');
+    pwaStatus.style.display = 'flex';
+  } else if (isIOS && !bannerDismissed) {
+    /* Safari on iOS, not installed yet */
+    banner.classList.remove('hidden'); // already visible by default
+    pwaStatus.style.display = 'none';
+  } else {
+    banner.classList.add('hidden');
+    pwaStatus.style.display = 'none';
+  }
+
+  function closeBanner() {
+    banner.classList.add('hidden');
+    localStorage.setItem('hp-banner-dismissed', '1');
+  }
+</script>
+</body>
+</html>
