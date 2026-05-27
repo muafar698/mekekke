@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEK — Högskoleprovet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1714;
+  --bg: #f2ede4;
+  --bg2: #e8e1d6;
+  --bg3: #ddd6c8;
+  --line: #cec6b8;
+  --muted: #7a7268;
+  --faint: #a89f94;
+  --gold: #b8802a;
+  --gold2: #d4993a;
+  --correct: #1f6b48;
+  --correct-bg: #cde8da;
+  --wrong: #7a2218;
+  --wrong-bg: #edd4d0;
+  --card: #fffcf7;
+  --r: 14px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Grain texture overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+/* ── HEADER ── */
+header {
+  position: relative; z-index: 10;
+  padding: 18px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  background: rgba(242,237,228,0.92);
+  backdrop-filter: blur(10px);
+}
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 900; letter-spacing: -0.3px;
+  color: var(--ink);
+}
+.logo span { color: var(--gold); }
+.logo-sub {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.header-right { display: flex; gap: 18px; align-items: center; }
+.hstat { text-align: center; }
+.hstat-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 700; line-height: 1;
+}
+.hstat-val.gold { color: var(--gold); }
+.hstat-label { font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+.hsep { width: 1px; height: 28px; background: var(--line); }
+
+/* ── PROGRESS BAR ── */
+.progress-wrap {
+  position: relative; z-index: 9;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
+  padding: 0;
+}
+.progress-bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold2));
+  transition: width 0.6s cubic-bezier(.4,0,.2,1);
+  width: 0%;
+}
+
+/* ── MAIN ── */
+main {
+  position: relative; z-index: 1; flex: 1;
+  max-width: 700px; width: 100%;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+  display: flex; flex-direction: column; gap: 20px; align-items: center;
+}
+
+/* ── QUESTION COUNTER ── */
+.q-counter {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--faint);
+  align-self: flex-start;
+}
+.q-counter strong { color: var(--gold); }
+
+/* ── SENTENCE CARD ── */
+.sentence-card {
+  width: 100%;
+  background: var(--card);
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 0 #c8c0b0, 0 6px 32px rgba(26,23,20,0.1);
+  padding: 36px 40px 32px;
+  min-height: 140px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+
+.card-label {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.card-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+.sentence {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(16px, 2.6vw, 21px);
+  font-weight: 400; line-height: 1.75;
+  color: var(--ink); text-align: center;
+}
+
+/* The blank gap */
+.gap {
+  display: inline-block;
+  width: clamp(60px, 8vw, 90px);
+  height: 2px;
+  background: var(--ink);
+  vertical-align: middle;
+  margin: 0 4px;
+  position: relative;
+  top: -4px;
+}
+
+/* ── OPTIONS GRID ── */
+.options-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.option-btn {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 500;
+  color: var(--ink);
+  transition: all 0.16s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 1px 0 var(--line);
+  display: flex; align-items: center; gap: 12px;
+  text-align: left;
+}
+.option-letter {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  background: var(--bg2); color: var(--muted);
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.16s;
+}
+.option-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  box-shadow: 0 2px 0 var(--gold2), 0 4px 18px rgba(184,128,42,0.14);
+  transform: translateY(-1px);
+}
+.option-btn:hover:not(:disabled) .option-letter { background: var(--gold); color: white; }
+.option-btn:disabled { cursor: default; }
+.option-btn.correct { background: var(--correct-bg); border-color: var(--correct); box-shadow: 0 2px 0 var(--correct); }
+.option-btn.correct .option-letter { background: var(--correct); color: white; }
+.option-btn.wrong { background: var(--wrong-bg); border-color: var(--wrong); box-shadow: 0 2px 0 var(--wrong); opacity: 0.72; }
+.option-btn.wrong .option-letter { background: var(--wrong); color: white; }
+.option-btn.dimmed { opacity: 0.32; }
+
+/* ── FEEDBACK ── */
+.feedback {
+  width: 100%; border-radius: var(--r);
+  padding: 20px 24px; font-size: 14px; line-height: 1.7;
+  border: 1px solid transparent;
+  animation: feedIn 0.3s cubic-bezier(.4,0,.2,1);
+}
+@keyframes feedIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.feedback.correct-fb { background: var(--correct-bg); border-color: var(--correct); }
+.feedback.wrong-fb   { background: var(--wrong-bg);   border-color: var(--wrong); }
+.feedback-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px; font-weight: 700;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+}
+.feedback.correct-fb .feedback-title { color: var(--correct); }
+.feedback.wrong-fb   .feedback-title { color: var(--wrong); }
+.feedback-body { color: var(--ink); opacity: 0.88; }
+
+/* ── BOTTOM ROW ── */
+.bottom-row {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%;
+}
+
+.history-dots { display: flex; gap: 4px; flex-wrap: wrap; max-width: 300px; }
+.hdot { width: 9px; height: 9px; border-radius: 50%; }
+.hdot.c { background: var(--correct); }
+.hdot.w { background: var(--wrong); }
+
+.btn-next {
+  background: var(--ink); color: var(--bg);
+  border: none; border-radius: 50px;
+  padding: 13px 36px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; letter-spacing: 0.03em;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+  transition: all 0.16s cubic-bezier(.4,0,.2,1);
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 0 rgba(0,0,0,0.3); }
+.btn-next:active { transform: translateY(1px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+
+/* ── RESULTS SCREEN ── */
+.results-screen {
+  width: 100%; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 24px;
+}
+.results-score-big {
+  font-family: 'Playfair Display', serif;
+  font-size: 80px; font-weight: 900; line-height: 1;
+  color: var(--gold);
+}
+.results-label { font-size: 13px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+.results-msg { font-size: 18px; font-weight: 500; max-width: 420px; line-height: 1.5; }
+.results-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%;
+}
+.rstat {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 18px; text-align: center;
+}
+.rstat-val { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; }
+.rstat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+.btn-restart {
+  background: var(--gold); color: white;
+  border: none; border-radius: 50px;
+  padding: 15px 42px; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.25);
+  transition: all 0.16s;
+}
+.btn-restart:hover { transform: translateY(-1px); background: var(--gold2); }
+
+.hidden { display: none !important; }
+
+@media (max-width: 560px) {
+  header { padding: 14px 16px; }
+  .hstat-val { font-size: 17px; }
+  .options-grid { grid-template-columns: 1fr; }
+  .sentence-card { padding: 24px 20px; }
+  main { padding: 22px 12px 60px; gap: 16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">MEK <span>·</span> HP</div>
+    <div class="logo-sub">Meningskomplettering — Högskoleprovsnivå</div>
+  </div>
+  <div class="header-right">
+    <div class="hstat">
+      <div class="hstat-val" id="statTotal">0</div>
+      <div class="hstat-label">Frågor</div>
+    </div>
+    <div class="hsep"></div>
+    <div class="hstat">
+      <div class="hstat-val gold" id="statScore">—</div>
+      <div class="hstat-label">Rätt</div>
+    </div>
+    <div class="hsep"></div>
+    <div class="hstat">
+      <div class="hstat-val" id="statStreak">0🔥</div>
+      <div class="hstat-label">Streak</div>
+    </div>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<main id="quizMain">
+  <div class="q-counter" id="qCounter">Fråga <strong>1</strong> av 50</div>
+
+  <div class="sentence-card" id="sentenceCard">
+    <div class="card-label">Välj det ord som passar bäst i luckan</div>
+    <p class="sentence" id="sentenceText"></p>
+  </div>
+
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback hidden" id="feedbackBox"></div>
+
+  <div class="bottom-row">
+    <div class="history-dots" id="historyDots"></div>
+    <button class="btn-next hidden" id="nextBtn" onclick="nextQuestion()">
+      Nästa fråga →
+    </button>
+  </div>
+</main>
+
+<div class="results-screen hidden" id="resultsScreen" style="max-width:700px;width:100%;margin:0 auto;padding:40px 20px;">
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// 50 MEK-FRÅGOR PÅ HÖGSKOLEPROVSNIVÅ — tom lucka-format
+// ═══════════════════════════════════════════════════════════
+const ALL_QUESTIONS = [
+  {
+    before: "Domstolens beslut var",
+    after: "och lämnade inget utrymme för vidare överklaganden.",
+    options: ["oåterkalleligt", "orubbligt", "definitiv", "bindande"],
+    correct: "oåterkalleligt",
+    explanation: "Oåterkalleligt (irrevocable) innebär att beslutet inte kan tas tillbaka eller ändras, vilket passar perfekt i juridisk kontext. Orubbligt handlar mer om fast karaktär, definitiv är adjektivets felaktiga form här (borde vara 'definitivt'), och bindande avser skyldigheten att följa ett beslut, inte att det inte kan överklagas."
+  },
+  {
+    before: "Forskarens hypotes om klimatets påverkan på mänskligt beteende visade sig vara",
+    after: "– ingenting i materialet stödde antagandet.",
+    options: ["grundlös", "irrelevant", "obevisad", "spekulativ"],
+    correct: "grundlös",
+    explanation: "Grundlös (unfounded/baseless) anger att hypotesen saknar varje form av underlag, vilket stärks av att 'ingenting' stödde den. Irrelevant handlar om att något saknar relevans men säger inget om underlag. Obevisad antyder att bevis kanske finns men saknas just nu. Spekulativ innebär att det bygger på gissningar, men utesluter inte att viss grund kan finnas."
+  },
+  {
+    before: "Styrelseledamöternas",
+    after: "inför bolagsstämman väckte stor uppmärksamhet i medierna.",
+    options: ["avsägelse", "avgång", "demission", "abdikation"],
+    correct: "avsägelse",
+    explanation: "Avsägelse är den korrekta termen för när styrelseledamöter formellt avsäger sig sina uppdrag. Avgång används mer informellt och är vanligare för politiker eller chefer. Demission är ett ovanligare ord som syftar på en regerings avgång i sin helhet. Abdikation avser specifikt en monarks avsägelse av tronen."
+  },
+  {
+    before: "Den nye ledarens retorik var genomgående",
+    after: "– han lovade allt till alla utan att precisera hur det skulle finansieras.",
+    options: ["populistisk", "demagogisk", "opportunistisk", "polemisk"],
+    correct: "populistisk",
+    explanation: "Populistisk beskriver en retorik som lovar allt till folket utan substans, vilket exakt stämmer med meningen. Demagogisk handlar mer om att manipulera folkets känslor och rädslor. Opportunistisk syftar på att handla utifrån lämpliga tillfällen snarare än principer. Polemisk innebär att man argumenterar aggressivt mot en motpart."
+  },
+  {
+    before: "Arkeologernas fynd var",
+    after: "– det handlade om en civilisation som historiker inte kände till.",
+    options: ["banbrytande", "remarkabelt", "sensationellt", "epokgörande"],
+    correct: "epokgörande",
+    explanation: "Epokgörande (epoch-making) innebär att något markerar början på en ny era i förståelsen av ett ämne, vilket passar för ett fynd som avslöjar en okänd civilisation. Banbrytande är nära men handlar mer om att bana väg inom ett fält. Remarkabelt och sensationellt är mer deskriptiva av reaktionen snarare än fyndets historiska tyngd."
+  },
+  {
+    before: "Hennes kritik av kollegans arbete var visserligen korrekt i sak, men formuleringarna var onödigt",
+    after: "och skapade konflikt i gruppen.",
+    options: ["sårande", "hård", "skarp", "elak"],
+    correct: "sårande",
+    explanation: "Sårande (hurtful/wounding) betonar den emotionella effekten på mottagaren, vilket passar kontexten 'skapade konflikt'. Hård antyder stränghet utan att nödvändigtvis orsaka emotionell skada. Skarp kan vara positivt (skarp analys) och är mer neutralt. Elak antyder illvillig avsikt, men meningen säger att kritiken var korrekt i sak."
+  },
+  {
+    before: "Lagstiftarnas oförmåga att nå konsensus ledde till ett politiskt",
+    after: "som förlamade hela den parlamentariska processen.",
+    options: ["dödläge", "stillestånd", "vakuum", "kaos"],
+    correct: "dödläge",
+    explanation: "Dödläge (deadlock/stalemate) är den precisa politiska termen för när parter inte kan gå framåt på grund av låsta positioner, vilket passar 'förlamade processen'. Stillestånd innebär att aktiviteten upphör men har inte samma innebörd av låsta positioner. Vakuum syftar på frånvaro av ledarskap eller makt. Kaos antyder oordning snarare än en låst situation."
+  },
+  {
+    before: "Den ekonomiska analysen var",
+    after: "och tog hänsyn till samtliga faktorer som påverkar marknadens funktionssätt.",
+    options: ["heltäckande", "uttömmande", "komprehensiv", "grundlig"],
+    correct: "uttömmande",
+    explanation: "Uttömmande (exhaustive) innebär att man gått igenom varje aspekt utan att lämna något obehandlat, vilket stöds av 'samtliga faktorer'. Heltäckande är nära men betonar mer bredd än djup. Komprehensiv är ett akademiskt lånord med liknande innebörd men används mer om system. Grundlig betonar noggrannhet snarare än fullständighet."
+  },
+  {
+    before: "Hans påstående om ekonomins återhämtning byggde på",
+    after: "data och kunde inte anses vetenskapligt tillförlitligt.",
+    options: ["anekdotiska", "selektiva", "tendentiösa", "vilseledande"],
+    correct: "anekdotiska",
+    explanation: "Anekdotiska data bygger på enstaka berättelser eller exempel snarare än systematisk insamling, vilket förklarar varför det inte är vetenskapligt tillförlitligt. Selektiva data handlar om att välja ut gynnsamma fakta, men utesluter inte att urvalet skett systematiskt. Tendentiösa antyder en vinkling men säger inte att det saknas systematik. Vilseledande är ett värdeladdat omdöme om avsikten."
+  },
+  {
+    before: "Filosofen argumenterade att verklighetens",
+    after: "natur gör det omöjligt att med säkerhet skilja perception från verklighet.",
+    options: ["subjektiva", "immateriella", "fenomenologiska", "ontologiska"],
+    correct: "subjektiva",
+    explanation: "Subjektiv natur innebär att verkligheten beror på percipienten, vilket direkt förklarar varför perception och verklighet inte kan separeras med säkerhet. Immateriell handlar om att sakna fysisk form. Fenomenologisk är ett metodbegrepp som handlar om erfarenhetsanalysen. Ontologisk handlar om varats natur men inte specifikt om perception-verklighetsrelationen."
+  },
+  {
+    before: "Reformerna genomfördes på ett",
+    after: "sätt som tog hänsyn till alla berörda parters intressen och minimerade negativa konsekvenser.",
+    options: ["pragmatiskt", "inkluderande", "konsensusinriktat", "hänsynsfullt"],
+    correct: "pragmatiskt",
+    explanation: "Pragmatiskt innebär att man fokuserar på vad som faktiskt fungerar och tar praktiska hänsyn, vilket stöds av att man 'minimerade negativa konsekvenser'. Inkluderande betonar deltagandet men inte konsekvenshanteringen. Konsensusinriktat handlar om att nå enighet, inte om metoden. Hänsynsfullt är ett mer vardagligt ord och saknar reformernas systematiska dimension."
+  },
+  {
+    before: "Vetenskapliga rön som",
+    after: "rådande paradigm brukar mötas av initialt motstånd inom forskarsamhället.",
+    options: ["utmanar", "ifrågasätter", "kullkastar", "destabiliserar"],
+    correct: "kullkastar",
+    explanation: "Kullkastar (overthrows/demolishes) innebär att man helt omvälver ett paradigm, vilket är den starkaste åtgärden och därmed möter störst motstånd. Utmanar antyder att man testar gränserna men inte nödvändigtvis vinner. Ifrågasätter är ännu svagare och antyder tvivel snarare än motbevisande. Destabiliserar skapar instabilitet men innebär inte att paradigmet ersätts."
+  },
+  {
+    before: "Journalistens avslöjande av korruptionen var ett",
+    after: "exempel på hur oberoende press fyller en viktig demokratisk funktion.",
+    options: ["talande", "slående", "flagrant", "illustrativt"],
+    correct: "illustrativt",
+    explanation: "Illustrativt (illustrative) innebär att något tjänar som ett tydligt och pedagogiskt exempel på en princip, vilket passar 'visar hur pressen fyller sin funktion'. Talande är nära men mer vardagligt. Slående betonar det imponerande intrycket snarare än det exemplifierande. Flagrant används nästan uteslutande om uppenbara överträdelser och passar inte positivt."
+  },
+  {
+    before: "Läkarens diagnos var",
+    after: "; patienten led av ett tillstånd som krävde omedelbar behandling.",
+    options: ["allvarlig", "kritisk", "akut", "alarmerande"],
+    correct: "akut",
+    explanation: "Akut (acute) innebär att tillståndet kräver omedelbar åtgärd, vilket direkt kopplas till 'krävde omedelbar behandling'. Allvarlig anger svårighetsgrad men inte tidskrav. Kritisk innebär att patienten är nära ett livshotande läge men betonar inte nödvändigtvis omedelbarhet. Alarmerande beskriver reaktionen snarare än medicinsk status."
+  },
+  {
+    before: "Rapporten beskrev landets ekonomiska situation som",
+    after: "och varnade för att ytterligare nedskärningar kunde få katastrofala följder.",
+    options: ["prekär", "instabil", "sårbar", "kritisk"],
+    correct: "prekär",
+    explanation: "Prekär (precarious) innebär en ytterst osäker och bräcklig situation där en liten förändring kan orsaka kollaps, vilket motiverar varningen om katastrofala följder. Instabil handlar om att saker förändras snabbt men utan samma bräcklighetskonnotation. Sårbar innebär att något kan skadas men inte att situationen är nära kollaps. Kritisk är starkt men saknar prekärs nyanser av bräcklighet."
+  },
+  {
+    before: "Professorns föreläsning om kognitiv dissonans var",
+    after: "– studenterna förstod äntligen kopplingen mellan teori och vardagliga erfarenheter.",
+    options: ["upplysande", "klargörande", "belysande", "didaktisk"],
+    correct: "belysande",
+    explanation: "Belysande (illuminating) betonar att något kastar ljus över en fråga och skapar förståelse, vilket stöds av att studenterna 'förstod kopplingen'. Upplysande har religiösa/filosofiska konnotationer utöver det pedagogiska. Klargörande är mer administrativt (klargöra ett missförstånd). Didaktisk är ett tekniskt pedagogikbegrepp som snarare beskriver metod än effekt."
+  },
+  {
+    before: "Hans inställning till kritik var anmärkningsvärt",
+    after: "– han välkomnade alltid motargument och förändrade gärna sin uppfattning om skälen var goda.",
+    options: ["receptiv", "ödmjuk", "flexibel", "öppensinnad"],
+    correct: "receptiv",
+    explanation: "Receptiv (receptive) innebär att man aktivt tar emot och bearbetar input, vilket passas av att han 'välkomnade motargument'. Ödmjuk handlar om att inte överskatta sig själv men betonar inte mottagligheten för argument. Flexibel betonar att man kan anpassa sig men inte specifikt till argument. Öppensinnad är nära men mer vardagligt och saknar receptivs aktiva mottagningskonnotation."
+  },
+  {
+    before: "Litteraturkritikern menade att verkets",
+    after: "struktur speglade den mänskliga erfarenhetens icke-linjära karaktär.",
+    options: ["fragmentariska", "diskontinuerliga", "eklektiska", "associativa"],
+    correct: "fragmentariska",
+    explanation: "Fragmentarisk (fragmentary) struktur innebär att helheten består av brottstycken utan tydlig kontinuitet, vilket speglar livets icke-linjära karaktär. Diskontinuerlig handlar om avbrott men antyder inte nödvändigtvis fragment. Eklektisk handlar om att blanda olika stilar och traditioner, inte om struktur. Associativ syftar på tankekedjeliknande kopplingar men inte på fragmentering."
+  },
+  {
+    before: "Statsminister argumenterade att skatteökningen var",
+    after: "med tanke på landets ekonomiska situation och behovet av välfärdsreformer.",
+    options: ["motiverad", "befogad", "nödvändig", "rimlig"],
+    correct: "befogad",
+    explanation: "Befogad (justified/warranted) innebär att det finns tillräckliga skäl som rättfärdigar åtgärden, med en formell-juridisk klang som passar politisk argumentation. Motiverad är nära men mer psykologiskt (vad som driver någon). Nödvändig är starkare och innebär att det inte finns alternativ. Rimlig är svagare och handlar mer om acceptans."
+  },
+  {
+    before: "Diskussionen om rättssystemets brister fördes på ett",
+    after: "sätt som undvek emotionella utspel och fokuserade på strukturella problem.",
+    options: ["sakligt", "analytiskt", "nyanserat", "distanserat"],
+    correct: "sakligt",
+    explanation: "Sakligt (matter-of-fact/factual) innebär att man håller sig till fakta och undviker känslor, vilket exakt speglas i 'undvek emotionella utspel'. Analytiskt betonar djupgranskning snarare än emotionell neutralitet. Nyanserat handlar om att se komplexitet, inte om att undvika emotion. Distanserat antyder en problematisk känslomässig frånkoppling."
+  },
+  {
+    before: "Konstnärens verk var genomsyrat av en",
+    after: "melankoli som reflekterade samhällets kollektiva sorg efter kriget.",
+    options: ["genomträngande", "diffus", "subtil", "djupliggande"],
+    correct: "subtil",
+    explanation: "Subtil (subtle) melankoli innebär att känslan är underliggande och inte uppenbar, vilket kontrasterar mot ett genomsyrande verk – känslan finns men kräver tolkning. Genomträngande är för stark och motstrider 'subtil'. Diffus antyder vag och odefinierad, inte genomsyrande. Djupliggande är nära men mer psykologiskt och passar bättre om källan till melankoliyn."
+  },
+  {
+    before: "Rapporten konstaterade att myndighetens hantering av krisen var",
+    after: "och att flera av de beslut som fattades saknade rättsligt stöd.",
+    options: ["bristfällig", "inkompetent", "otillräcklig", "misslyckad"],
+    correct: "bristfällig",
+    explanation: "Bristfällig (deficient/inadequate) är ett precist administrativt-juridiskt ord som innebär att det finns konkreta brister, vilket passar väl med 'saknade rättsligt stöd'. Inkompetent riktar sig mot personerna snarare än hanteringen. Otillräcklig antyder att insatserna var för liten men säger inget om brister i genomförandet. Misslyckad är ett omdöme om slutresultatet."
+  },
+  {
+    before: "Utredningens slutsatser var",
+    after: "och ifrågasatte de antaganden som legat till grund för hela projektet.",
+    options: ["kontroversiella", "kontraintuitiva", "provocerande", "radikala"],
+    correct: "kontraintuitiva",
+    explanation: "Kontraintuitiva slutsatser är sådana som går mot det vi spontant förväntar oss – de 'ifrågasätter antaganden' man tar för givna. Kontroversiella skapar debatt men inte nödvändigtvis mot intuitionen. Provocerande betonar reaktionen snarare än slutsatsernas karaktär. Radikala innebär att man vill ha grundläggande förändring, inte att de ifrågasätter antaganden."
+  },
+  {
+    before: "Debattören använde",
+    after: "argument som skenbart verkade logiska men i grunden var felaktiga.",
+    options: ["sofistikerade", "sofistiska", "vilseledande", "retoriska"],
+    correct: "sofistiska",
+    explanation: "Sofistiska argument är sådana som skenbart verkar logiska men i verkligheten bygger på felslut – precis som meningen beskriver. Sofistikerade innebär avancerade och förfinade, vilket snarare är positivt. Vilseledande betonar avsikten att lura, inte att argumenten skenbart verkar logiska. Retoriska argument är anpassade för övertalning och är inte nödvändigtvis felaktiga."
+  },
+  {
+    before: "Hennes förmåga att",
+    after: "komplexa vetenskapliga teorier för en bredare publik var imponerande.",
+    options: ["popularisera", "förmedla", "förenkla", "kommunicera"],
+    correct: "popularisera",
+    explanation: "Popularisera (popularize) innebär specifikt att göra avancerat material tillgängligt för en bredare, icke-specialistpublik, vilket är vad meningen beskriver. Förmedla är neutralt och innebär bara att föra vidare. Förenkla kan ha negativa konnotationer och antyder att man tar bort nyanser. Kommunicera är för brett och säger ingenting om publiken."
+  },
+  {
+    before: "Den politiska situationen var så",
+    after: "att varje uttalande riskerade att tolkas som en partsinlaga.",
+    options: ["känslig", "laddad", "polariserad", "spänd"],
+    correct: "laddad",
+    explanation: "Laddad (charged) innebär att situationen är fylld med underliggande spänningar och emotionella/politiska implikationer, vilket förklarar tolkningsrisken. Känslig är nära men mer allmänt (t.ex. ett känsligt ämne). Polariserad beskriver en uppdelning i läger men inte nödvändigtvis att varje uttalande är riskabelt. Spänd antyder en öppen konfliktyta snarare än underliggande laddning."
+  },
+  {
+    before: "Texten utgjorde ett",
+    after: "mot tidens rådande moraluppfattning och ifrågasatte institutionernas legitimitet.",
+    options: ["uppror", "angrepp", "frontalangrepp", "manifest"],
+    correct: "manifest",
+    explanation: "Manifest (manifesto) är en formell, skriftlig förklaring av principer och avsikter som utmanar det rådande, vilket passar en text som ifrågasätter institutioner systematiskt. Uppror antyder fysisk eller organiserad revolt. Angrepp är vagt och saknar textens programmatiska karaktär. Frontalangrepp är mer militärt och antyder direkt konfrontation snarare än en principiell argumentering."
+  },
+  {
+    before: "Bolagets finansiella ställning var",
+    after: ", vilket tvingade styrelsen att omedelbart kalla till extra bolagsstämma.",
+    options: ["ohållbar", "prekär", "katastrofal", "illikvid"],
+    correct: "illikvid",
+    explanation: "Illikvid (illiquid) är den exakta ekonomisk-juridiska termen för ett bolag som inte kan möta sina kortfristiga betalningsförpliktelser, vilket tvingar fram akuta åtgärder som extra stämma. Ohållbar är för allmänt. Prekär är mer om bräcklighet än om kassaflöde. Katastrofal är ett värdeladdat omdöme och inte en ekonomisk term."
+  },
+  {
+    before: "Forskarens metodologiska val utsattes för",
+    after: "granskning av kollegor inom fältet, vilket resulterade i en reviderad version av studien.",
+    options: ["kritisk", "ingående", "skeptisk", "rigorös"],
+    correct: "rigorös",
+    explanation: "Rigorös (rigorous) granskning innebär att varje aspekt av metoden granskas mot strikta vetenskapliga standarder, vilket leder till faktiska revisioner. Kritisk betonar att man hittar brister men inte metodens systematiska noggrannhet. Ingående är nära men saknar rigörösitetens normativa dimension. Skeptisk handlar om grundinställningen, inte om granskningens kvalitet."
+  },
+  {
+    before: "Det var en",
+    after: "sammansättning av faktorer som bidrog till finanskrisens utbrott – ingen enskild orsak var avgörande.",
+    options: ["mångfacetterad", "komplex", "diffus", "konvergent"],
+    correct: "konvergent",
+    explanation: "Konvergent sammansättning innebär att separata faktorer rörde sig mot samma punkt och förstärkte varandra, vilket förklarar att ingen enskild orsak var avgörande. Mångfacetterad betonar mångfalden av aspekter men inte att de samverkade mot ett läge. Komplex är för allmänt. Diffus antyder att faktorerna var otydliga och utspridda, inte att de konvergerade."
+  },
+  {
+    before: "Myndighetens beslut att hemligstämpla rapporten var",
+    after: "med grundlagens krav på offentlighetsprincipen.",
+    options: ["oförenligt", "motstridigt", "inkonsekvent", "stridande"],
+    correct: "oförenligt",
+    explanation: "Oförenligt (incompatible) är den juridisk-formella termen som exakt beskriver att två saker inte kan existera parallellt, perfekt för att beskriva en konflikt med grundlagen. Motstridigt antyder en intern logisk konflikt. Inkonsekvent handlar om bristande konsekvens i handlande över tid. Stridande ('stridande mot') är nära men mer vardagligt och juridiskt svagare."
+  },
+  {
+    before: "I sin essä argumenterade hon",
+    after: "att det moderna samhällets syn på lycka är djupt problematisk.",
+    options: ["övertygande", "träffsäkert", "stringent", "övertygat"],
+    correct: "stringent",
+    explanation: "Stringent (stringent/rigorous) argumentation innebär att varje led i argumentationen hänger logiskt ihop utan luckor, vilket är ett precist akademiskt begrepp. Övertygande handlar om effekten på läsaren, inte om argumentationens logiska kvalitet. Träffsäkert betonar att man hittar rätt snarare än logisk stramhet. Övertygat är ett adverbium som beskriver talarens inställning."
+  },
+  {
+    before: "Det geopolitiska läget skapade en",
+    after: "situation där nationella intressen och humanitära hänsyn direkt motverkade varandra.",
+    options: ["paradoxal", "dilemmatisk", "aporisk", "kontradiktorisk"],
+    correct: "dilemmatisk",
+    explanation: "Dilemmatisk situation innebär att man måste välja mellan två alternativ som båda medför negativa konsekvenser, vilket precis beskrivs av att nationella intressen och humanitära hänsyn 'motverkar varandra'. Paradoxal handlar om att saker tycks motsäga sig men kan förenas. Aporisk (från aporia) är filosofisk term för att man kör fast utan lösning. Kontradiktorisk innebär logisk motsägelse."
+  },
+  {
+    before: "Läkemedelskompaniet utsattes för",
+    after: "anklagelser om att ha dolt biverkningsdata för myndigheterna.",
+    options: ["allvarliga", "graverande", "besvärande", "tyngande"],
+    correct: "graverande",
+    explanation: "Graverande (incriminating/damning) anklagelser är sådana som starkt talar för skuld – ett juridiskt-formellt ord som passar perfekt för allvarliga juridiska anklagelser. Allvarliga är för allmänt. Besvärande antyder att det är problematiskt men inte nödvändigtvis pekar mot skuld. Tyngande handlar om psykologisk börda, inte juridisk."
+  },
+  {
+    before: "Filosofen beskrev döden som det",
+    after: "okända – det enda vi vet om den är att vi inget vet.",
+    options: ["absoluta", "yttersta", "definitiva", "ultimata"],
+    correct: "yttersta",
+    explanation: "Det yttersta okända innebär den gräns bortom vilken ingen kunskap är möjlig – med existentiell och filosofisk klang. Absoluta okända vore grammatiskt 'det absoluta okända' och handlar mer om totalitet. Definitiva okända passar dåligt semantiskt. Ultimata är ett anglicism-klingande alternativ men saknar den filosofiska djupklangen som yttersta har på svenska."
+  },
+  {
+    before: "Studenternas",
+    after: "inför examen var fullt förståelig med tanke på ämnets komplexitet.",
+    options: ["nervositet", "ängslan", "tvekan", "apprehension"],
+    correct: "apprehension",
+    explanation: "Apprehension är ett precist psykologiskt begrepp för oro inför något vars utgång är osäker – med akademisk klang som passar en mening om examen och komplexitet. Nervositet är mer vardaglig. Ängslan antyder en djupare, mer generell ångest. Tvekan handlar om beslutsosäkerhet, inte om inför-situationen-oro."
+  },
+  {
+    before: "Organisationens interna konflikter hade nått en punkt där de var",
+    after: "synliga för utomstående och riskerade att skada varumärket.",
+    options: ["pinsamt", "påtagligt", "tydligt", "uppenbara"],
+    correct: "påtagligt",
+    explanation: "Påtagligt (palpably/tangibly) innebär att något är märkbart och konkret upplevbart, inte bara teoretiskt synligt – en stark grad av synlighet som motiverar varumärkesrisken. Pinsamt är ett värdeomdöme med emotionell laddning. Tydligt är mer kognitivt (man förstår det). Uppenbara stämmer grammatiskt med 'konflikter' men är svagare i styrka än påtagligt."
+  },
+  {
+    before: "Avtalet betraktades av juridiska experter som",
+    after: "från ett internationell-rättsligt perspektiv.",
+    options: ["problematiskt", "tvivelaktigt", "kontroversiellt", "anmärkningsvärt"],
+    correct: "tvivelaktigt",
+    explanation: "Tvivelaktigt (questionable/dubious) innebär att legitimiteten eller korrektheten kan ifrågasättas, vilket passar för ett juridiskt perspektiv. Problematiskt är för allmänt. Kontroversiellt betonar att det skapar debatt men inte specifikt den juridiska aspekten. Anmärkningsvärt kan vara positivt eller negativt och saknar tvivelaktighets pejorativi."
+  },
+  {
+    before: "Beslutsfattarnas ovilja att agera trots tydliga varningssignaler vittnar om en",
+    after: "inställning till framtida risker.",
+    options: ["kortsiktig", "negligent", "naiv", "cynisk"],
+    correct: "negligent",
+    explanation: "Negligent (negligent) innebär en ansvarslös brist på uppmärksamhet trots att man borde ha handlat – ett precist juridiskt-etiskt begrepp som passar 'trots tydliga varningssignaler'. Kortsiktig handlar om tidshorisont, inte om ovilja att agera. Naiv antyder välmening men bristande insikt. Cynisk antyder att man är medveten om problemen men bryr sig inte."
+  },
+  {
+    before: "Domstolen fann att kontraktet innehöll",
+    after: "klausuler som ensidigt gynnade en av parterna.",
+    options: ["oskäliga", "orättvisa", "ensidiga", "orimliga"],
+    correct: "oskäliga",
+    explanation: "Oskäliga (unconscionable/unreasonable) är det exakta juridiska begreppet för kontraktsvillkor som är så obalanserade att de strider mot god sed, vilket är mer precist än de övriga alternativen i ett juridiskt sammanhang. Orättvisa är moraliskt laddad utan juridisk precision. Ensidiga är deskriptivt men inte normativt som oskäliga. Orimliga är för allmänt."
+  },
+  {
+    before: "Den sociologiska studien avslöjade ett",
+    after: "mönster av diskriminering som genomsyrade hela antagningsprocessen.",
+    options: ["systematiskt", "strukturellt", "djupgående", "utbrett"],
+    correct: "strukturellt",
+    explanation: "Strukturellt mönster av diskriminering innebär att det är inbyggt i systemets uppbyggnad snarare än beroende av enskilda individers avsikter – ett precist sociologiskt begrepp. Systematiskt antyder att det sker avsiktligt och organiserat. Djupgående betonar allvarlighetsgraden. Utbrett handlar om spridning, inte om diskrimineringens karaktär."
+  },
+  {
+    before: "Hans sätt att presentera sin forskning var",
+    after: "; han förenade vetenskaplig precision med en förmåga att engagera."
+    ,
+    options: ["exemplariskt", "föredömligt", "mästerligt", "pedagogiskt"],
+    correct: "exemplariskt",
+    explanation: "Exemplariskt (exemplary) innebär att något är så bra att det kan tjäna som föredöme för andra – med en formell, uppskattande ton som passar akademiska sammanhang. Föredömligt är nära men mer vardagligt. Mästerligt betonar konstnärlig behärskning snarare än förebildlighet. Pedagogiskt betonar lärande-aspekten men inte helheten av presentationen."
+  },
+  {
+    before: "Åtgärden kritiserades för att vara",
+    after: "och inte ta itu med de bakomliggande orsakerna till problemet.",
+    options: ["symptomatisk", "ytlig", "palliativ", "kosmetisk"],
+    correct: "palliativ",
+    explanation: "Palliativ (palliative) åtgärd lindrar symptom utan att angripa grundorsaken – precis som meningen beskriver med 'inte ta itu med de bakomliggande orsakerna'. Kosmetisk betonar att man bara ändrar ytan/utseendet. Ytlig är för allmänt. Symptomatisk är ett beskrivande adjektiv (av symptom) och är inte ett omdöme om åtgärdens otillräcklighet."
+  },
+  {
+    before: "De geopolitiska förändringarna hade",
+    after: "konsekvenser för regionens länder, vars ekonomier var starkt beroende av handel med varandra.",
+    options: ["vittgående", "genomgripande", "långtgående", "omvälvande"],
+    correct: "vittgående",
+    explanation: "Vittgående (far-reaching) konsekvenser sträcker sig brett och påverkar många aspekter, vilket passar för ekonomiskt beroende länder i en region. Genomgripande innebär att något påverkar på djupet snarare än på bredden. Långtgående är nära men betonar tidsaspekten. Omvälvande betonar dramatiken snarare än konsekvensernas räckvidd."
+  },
+  {
+    before: "Debatten om AI-reglering har blivit alltmer",
+    after: "i takt med att teknologins kapaciteter expanderar bortom det vi tidigare ansåg möjligt.",
+    options: ["brådskande", "akut", "imperativ", "angelägen"],
+    correct: "imperativ",
+    explanation: "Imperativ (imperative) innebär att något är absolut nödvändigt och inte kan fördröjas – med en formell-normativ ton som passar akademisk-politisk diskurs om reglering. Brådskande handlar om tidsbrist. Akut har medicinsk konnotation. Angelägen är mer vardagligt och antyder att man bör bry sig utan att kräva absolut nödvändighet."
+  },
+  {
+    before: "Hans självkritik efter misstaget var",
+    after: "– han övertolkade sin roll och betraktade sig som ensam skyldig för ett kollektivt misslyckande.",
+    options: ["oproportionerlig", "överdriven", "självdestruktiv", "irrationell"],
+    correct: "oproportionerlig",
+    explanation: "Oproportionerlig (disproportionate) är det precisa begreppet för en reaktion som inte är i proportion till det faktiska ansvaret – 'ensam skyldig för kollektivt misslyckande' illustrerar obalansen. Överdriven är nära men mer vardagligt och saknar proportionsaspekten. Självdestruktiv betonar skadan för personen. Irrationell handlar om brist på logik, inte om proportioner."
+  },
+  {
+    before: "Hennes arbete med flyktingfrågor bottnade i ett",
+    after: "engagemang för mänsklig värdighet som sträckte sig bortom professionella åtaganden.",
+    options: ["genuint", "djupt", "autentiskt", "personligt"],
+    correct: "autentiskt",
+    explanation: "Autentiskt (authentic) engagemang innebär att det är äkta och emanerar från personens innersta värderingar, inte från yttre krav – 'bortom professionella åtaganden' understryker detta. Genuint är nära men mer vardagligt. Djupt betonar intensiteten snarare än äktheten. Personligt betonar individuell karaktär men inte nödvändigtvis äkthet."
+  },
+  {
+    before: "Rapporten identifierade ett antal",
+    after: "faktorer som riskerade att underminera genomförandet av reformen.",
+    options: ["kritiska", "avgörande", "försvårande", "hämmande"],
+    correct: "försvårande",
+    explanation: "Försvårande (complicating/aggravating) faktorer är sådana som gör genomförandet svårare och ökar risken för misslyckande, precis som meningen beskriver. Kritiska faktorer är de avgörande, nödvändiga delarna – inte de som skapar problem. Avgörande har liknande problem. Hämmande betonar att faktorer bromsar men inte aktivt försvårar."
+  },
+  {
+    before: "Det finansiella systemets",
+    after: "natur innebär att en kris i ett land snabbt kan sprida sig till hela den globala ekonomin.",
+    options: ["sammanlänkade", "integrerade", "systemiska", "interdependenta"],
+    correct: "interdependenta",
+    explanation: "Interdependent (interdependent) natur innebär att delarna är ömsesidigt beroende av varandra – krisens snabba spridning är just ett resultat av att varje del påverkar de andra. Sammanlänkade är mer strukturellt. Integrerade innebär att delarna är sammanvävda men inte att de ömsesidigt påverkar varandra dynamiskt. Systemiska syftar på krisers art, inte på systemets natur."
+  },
+  {
+    before: "Undersökningen visade att mätresultaten var",
+    after: "av en systematisk experimentell bias som påverkat datainsamlingen.",
+    options: ["kontaminerade", "snedvridna", "påverkade", "komprometterade"],
+    correct: "komprometterade",
+    explanation: "Komprometterade (compromised) mätresultat innebär att resultatens tillförlitlighet och validitet är allvarligt undergrävd – ett starkt akademiskt begrepp. Kontaminerade används mer om fysisk förorening. Snedvridna betonar riktningsbias men inte undergrävandet av helheten. Påverkade är för svagt och neutralt."
+  },
+  {
+    before: "Den humanistiska traditionen betonar att kunskap inte kan vara helt",
+    after: "utan alltid är inbäddad i en historisk och kulturell kontext.",
+    options: ["objektiv", "neutral", "värdefri", "kontextoberoende"],
+    correct: "kontextoberoende",
+    explanation: "Kontextoberoende är det precisa motsatsbegreppet till 'inbäddad i historisk och kulturell kontext' – meningen är en direkt negation av kontextoberoende. Objektiv handlar om friheten från subjektiva bias. Neutral handlar om att inte ta ställning. Värdefri syftar på frihet från värderingar, vilket är ett relaterat men distinkt begrepp."
+  }
+];
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let questions = [];
+let currentIdx = 0;
+let answered = false;
+let total = 0, correct = 0, streak = 0;
+let historyArr = [];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function init() {
+  questions = shuffle(ALL_QUESTIONS);
+  currentIdx = 0;
+  total = 0; correct = 0; streak = 0;
+  historyArr = [];
+  updateStats();
+  renderQuestion();
+  document.getElementById('quizMain').classList.remove('hidden');
+  document.getElementById('resultsScreen').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER QUESTION
+// ═══════════════════════════════════════════════════════════
+function renderQuestion() {
+  if (currentIdx >= questions.length) {
+    showResults();
+    return;
+  }
+
+  const q = questions[currentIdx];
+  answered = false;
+
+  // Counter
+  document.getElementById('qCounter').innerHTML =
+    `Fråga <strong>${currentIdx + 1}</strong> av ${questions.length}`;
+
+  // Progress bar
+  document.getElementById('progressBar').style.width =
+    ((currentIdx / questions.length) * 100) + '%';
+
+  // Sentence with blank
+  const gap = `<span class="gap"></span>`;
+  document.getElementById('sentenceText').innerHTML =
+    escHtml(q.before) + '&nbsp;' + gap + '&nbsp;' + escHtml(q.after);
+
+  // Options
+  const shuffledOpts = shuffle(q.options);
+  const letters = ['A', 'B', 'C', 'D'];
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+
+  shuffledOpts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.dataset.value = opt;
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${escHtml(opt)}</span>`;
+    btn.addEventListener('click', () => handleAnswer(opt, btn));
+    grid.appendChild(btn);
+  });
+
+  // Hide feedback and next button
+  document.getElementById('feedbackBox').classList.add('hidden');
+  document.getElementById('nextBtn').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+// HANDLE ANSWER
+// ═══════════════════════════════════════════════════════════
+function handleAnswer(chosen, btn) {
+  if (answered) return;
+  answered = true;
+  total++;
+
+  const q = questions[currentIdx];
+  const isCorrect = chosen === q.correct;
+  const allBtns = document.querySelectorAll('.option-btn');
+
+  allBtns.forEach(b => {
+    b.disabled = true;
+    const val = b.dataset.value;
+    if (val === q.correct) b.classList.add('correct');
+    else if (b === btn && !isCorrect) b.classList.add('wrong');
+    else b.classList.add('dimmed');
+  });
+
+  if (isCorrect) { correct++; streak++; }
+  else { streak = 0; }
+
+  historyArr.push(isCorrect ? 'c' : 'w');
+  updateStats();
+  renderFeedback(isCorrect, q);
+  renderHistory();
+  document.getElementById('nextBtn').classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FEEDBACK
+// ═══════════════════════════════════════════════════════════
+function renderFeedback(isCorrect, q) {
+  const box = document.getElementById('feedbackBox');
+  box.className = 'feedback ' + (isCorrect ? 'correct-fb' : 'wrong-fb');
+  const title = isCorrect
+    ? '✓ Rätt!'
+    : `✗ Fel — rätt svar: <strong>${escHtml(q.correct)}</strong>`;
+  box.innerHTML = `<div class="feedback-title">${title}</div>
+    <div class="feedback-body">${escHtml(q.explanation)}</div>`;
+  box.classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+// NEXT
+// ═══════════════════════════════════════════════════════════
+function nextQuestion() {
+  currentIdx++;
+  renderQuestion();
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════
+function updateStats() {
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statScore').textContent =
+    total > 0 ? Math.round((correct / total) * 100) + '%' : '—';
+  document.getElementById('statStreak').textContent = streak + '🔥';
+}
+
+function renderHistory() {
+  const dots = document.getElementById('historyDots');
+  dots.innerHTML = historyArr.slice(-30).map(h =>
+    `<div class="hdot ${h}"></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════════════════════
+function showResults() {
+  document.getElementById('quizMain').classList.add('hidden');
+  document.getElementById('progressBar').style.width = '100%';
+
+  const pct = Math.round((correct / total) * 100);
+  let msg = '';
+  if (pct >= 90) msg = 'Utmärkt! Du presterar på en mycket hög nivå — typisk poäng för att kvala till HP:s toppskikt.';
+  else if (pct >= 75) msg = 'Bra jobbat! Du behärskar de flesta nyanser på högskoleprovsnivå.';
+  else if (pct >= 60) msg = 'Godkänd nivå. Fortsätt träna på nyanser mellan synonymer i akademisk kontext.';
+  else msg = 'Mer träning behövs. Fokusera på konnotationer och register — det är kärnan i MEK.';
+
+  const screen = document.getElementById('resultsScreen');
+  screen.innerHTML = `
+    <div class="results-score-big">${pct}%</div>
+    <div class="results-label">Slutresultat</div>
+    <div class="results-msg">${msg}</div>
+    <div class="results-grid">
+      <div class="rstat">
+        <div class="rstat-val">${correct}</div>
+        <div class="rstat-label">Rätt svar</div>
+      </div>
+      <div class="rstat">
+        <div class="rstat-val">${total - correct}</div>
+        <div class="rstat-label">Fel svar</div>
+      </div>
+      <div class="rstat">
+        <div class="rstat-val">${total}</div>
+        <div class="rstat-label">Totalt</div>
+      </div>
+    </div>
+    <button class="btn-restart" onclick="init()">Kör om — ny ordning ↺</button>
+  `;
+  screen.classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
